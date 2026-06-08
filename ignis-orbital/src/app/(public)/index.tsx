@@ -3,15 +3,16 @@
 
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, StyleSheet, Text, View } from 'react-native';
 import { AlertaCard } from '../../components/AlertaCard';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { colors, fonts, spacing } from '../../constants/theme';
+import { getErrorMessage } from '../../services/api';
 import { Alerta, getAlertas } from '../../services/alertas';
 
 export default function AlertasScreen() {
   const [alertas, setAlertas] = useState<Alerta[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
@@ -19,19 +20,21 @@ export default function AlertasScreen() {
   }, []);
 
   async function carregarAlertas() {
-    setLoading(true);
+    setIsLoading(true);
     setErro('');
     try {
       const dados = await getAlertas();
       setAlertas(dados);
-    } catch {
-      setErro('Não foi possível carregar os alertas. Tente novamente.');
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Não foi possível carregar os alertas.');
+      setErro(mensagem);
+      Alert.alert('Erro', mensagem);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
-  if (loading) return <LoadingIndicator mensagem="Buscando focos de calor..." />;
+  if (isLoading) return <LoadingIndicator mensagem="Buscando focos de calor..." />;
 
   return (
     <View style={styles.container}>

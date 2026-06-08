@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -17,17 +18,17 @@ import { AppLogo } from '../../components/AppLogo';
 import { useAuth } from '../../context/AuthContext';
 import { logoAspectRatio, logos } from '../../constants/images';
 import { colors, fonts, radius, spacing } from '../../constants/theme';
+import { getErrorMessage } from '../../services/api';
 
 export default function LoginScreen() {
   const { login } = useAuth();
 
-  const [email, setEmail]       = useState('');
-  const [senha, setSenha]       = useState('');
-  const [erro, setErro]         = useState('');
-  const [loading, setLoading]   = useState(false);
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleLogin() {
-    // Validação básica do formulário
     if (!email.trim() || !senha.trim()) {
       setErro('Preencha todos os campos.');
       return;
@@ -38,15 +39,17 @@ export default function LoginScreen() {
     }
 
     setErro('');
-    setLoading(true);
+    setIsLoading(true);
 
     try {
       await login({ email: email.trim(), senha });
       router.replace('/(admin)/dashboard');
-    } catch (e: any) {
-      setErro(e.message ?? 'Erro ao fazer login.');
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Erro ao fazer login.');
+      setErro(mensagem);
+      Alert.alert('Erro', mensagem);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -83,22 +86,20 @@ export default function LoginScreen() {
             secureTextEntry
           />
 
-          {/* Mensagem de Erro */}
           {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 
           <TouchableOpacity
-            style={[styles.botao, loading && styles.botaoDisabled]}
+            style={[styles.botao, isLoading && styles.botaoDisabled]}
             onPress={handleLogin}
-            disabled={loading}
+            disabled={isLoading}
           >
-            {loading
+            {isLoading
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.botaoTexto}>Entrar</Text>
             }
           </TouchableOpacity>
         </View>
 
-        {/* Dica para o avaliador / testes */}
         <Text style={styles.dica}>
           Credencial de teste:{'\n'}admin@ignis.com · senha: 123456
         </Text>

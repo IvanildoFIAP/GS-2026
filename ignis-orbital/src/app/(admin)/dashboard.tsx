@@ -8,13 +8,14 @@ import Icon from '@expo/vector-icons/FontAwesome';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { useAuth } from '../../context/AuthContext';
 import { colors, fonts, radius, spacing } from '../../constants/theme';
+import { getErrorMessage } from '../../services/api';
 import { Regiao, deleteRegiao, getRegioes } from '../../services/regioes';
 
 export default function DashboardScreen() {
   const { usuario, isCarregando, logout } = useAuth();
 
   const [regioes, setRegioes] = useState<Regiao[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [erro, setErro] = useState('');
 
   useEffect(() => {
@@ -30,15 +31,17 @@ export default function DashboardScreen() {
   }, [usuario]);
 
   async function carregarRegioes() {
-    setLoading(true);
+    setIsLoading(true);
     setErro('');
     try {
       const dados = await getRegioes();
       setRegioes(dados);
-    } catch {
-      setErro('Erro ao carregar regiões.');
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Erro ao carregar regiões.');
+      setErro(mensagem);
+      Alert.alert('Erro', mensagem);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -61,8 +64,9 @@ export default function DashboardScreen() {
     try {
       await deleteRegiao(id);
       setRegioes((prev) => prev.filter((r) => r.id_regiao !== id));
-    } catch {
-      Alert.alert('Erro', 'Não foi possível excluir a região.');
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Não foi possível excluir a região.');
+      Alert.alert('Erro', mensagem);
     }
   }
 
@@ -75,7 +79,7 @@ export default function DashboardScreen() {
     return <LoadingIndicator mensagem="Verificando sessão..." />;
   }
 
-  if (loading) return <LoadingIndicator mensagem="Carregando regiões..." />;
+  if (isLoading) return <LoadingIndicator mensagem="Carregando regiões..." />;
 
   return (
     <View style={styles.container}>
@@ -108,12 +112,12 @@ export default function DashboardScreen() {
                 <Text style={styles.criticidadeTexto}>Criticidade {item.nr_criticidade_base}/10</Text>
               </View>
             </View>
-            <Text style={styles.cardBioma}>{item.ds_bioma} · {item.ds_estado}</Text>
+            <Text style={styles.cardBioma}>{item.ds_bioma}</Text>
 
             <View style={styles.acoes}>
               <TouchableOpacity
                 style={styles.botaoEditar}
-                onPress={() => router.push({ pathname: '/(admin)/form', params: { regiaoJson: JSON.stringify(item) } })}
+                onPress={() => router.push({ pathname: '/(admin)/form', params: { id: String(item.id_regiao) } })}
               >
                 <Icon name="pencil" size={14} color={colors.accent} />
                 <Text style={styles.botaoEditarTexto}>Editar</Text>

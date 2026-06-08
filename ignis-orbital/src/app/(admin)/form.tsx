@@ -1,6 +1,6 @@
 // app/(admin)/form.tsx
 // Formulário de Criar/Editar Região
-// Dinâmico: se receber "regiaoJson" nos params, abre em modo edição; senão, em modo criação
+// Se receber "id" nos params, abre em modo edição; senão, em modo criação
 
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -19,28 +19,22 @@ import {
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { useAuth } from '../../context/AuthContext';
 import { colors, fonts, radius, spacing } from '../../constants/theme';
-import { Regiao, createRegiao, updateRegiao } from '../../services/regioes';
+import { getErrorMessage } from '../../services/api';
+import { createRegiao, getRegiaoById, updateRegiao } from '../../services/regioes';
 
 export default function FormRegiao() {
   const { usuario, isCarregando } = useAuth();
-  const params = useLocalSearchParams<{ regiaoJson?: string }>();
+  const params = useLocalSearchParams<{ id?: string }>();
 
-  // Se veio um objeto, estamos editando; senão, criando
-  const regiaoParaEditar: Regiao | null = params.regiaoJson
-    ? JSON.parse(params.regiaoJson)
-    : null;
+  const regiaoId = params.id ? Number(params.id) : null;
+  const modoEdicao = regiaoId !== null && !Number.isNaN(regiaoId);
 
-  const modoEdicao = !!regiaoParaEditar;
-
-  // Campos do formulário
-  const [nmRegiao, setNmRegiao]           = useState(regiaoParaEditar?.nm_regiao ?? '');
-  const [dsBioma, setDsBioma]             = useState(regiaoParaEditar?.ds_bioma ?? '');
-  const [dsEstado, setDsEstado]           = useState(regiaoParaEditar?.ds_estado ?? '');
-  const [criticidade, setCriticidade]     = useState(
-    regiaoParaEditar ? String(regiaoParaEditar.nr_criticidade_base) : '',
-  );
-  const [loading, setLoading]             = useState(false);
-  const [erro, setErro]                   = useState('');
+  const [nmRegiao, setNmRegiao] = useState('');
+  const [dsBioma, setDsBioma] = useState('');
+  const [criticidade, setCriticidade] = useState('');
+  const [isLoading, setIsLoading] = useState(modoEdicao);
+  const [isSaving, setIsSaving] = useState(false);
+  const [erro, setErro] = useState('');
 
   useEffect(() => {
     if (!isCarregando && !usuario) {
@@ -48,12 +42,40 @@ export default function FormRegiao() {
     }
   }, [usuario, isCarregando]);
 
+  useEffect(() => {
+    if (modoEdicao && regiaoId) {
+      carregarRegiao(regiaoId);
+    }
+  }, [modoEdicao, regiaoId]);
+
+  async function carregarRegiao(id: number) {
+    setIsLoading(true);
+    setErro('');
+    try {
+      const regiao = await getRegiaoById(id);
+      if (!regiao) throw new Error('Região não encontrada.');
+      setNmRegiao(regiao.nm_regiao);
+      setDsBioma(regiao.ds_bioma);
+      setCriticidade(String(regiao.nr_criticidade_base));
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Erro ao carregar a região.');
+      setErro(mensagem);
+      Alert.alert('Erro', mensagem);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   if (isCarregando || !usuario) {
     return <LoadingIndicator mensagem="Verificando sessão..." />;
   }
 
+  if (isLoading) {
+    return <LoadingIndicator mensagem="Carregando região..." />;
+  }
+
   function validar(): boolean {
-    if (!nmRegiao.trim() || !dsBioma.trim() || !dsEstado.trim() || !criticidade.trim()) {
+    if (!nmRegiao.trim() || !dsBioma.trim() || !criticidade.trim()) {
       setErro('Todos os campos são obrigatórios.');
       return false;
     }
@@ -69,27 +91,28 @@ export default function FormRegiao() {
   async function handleSalvar() {
     if (!validar()) return;
 
-    setLoading(true);
+    setIsSaving(true);
     const dados = {
-      nm_regiao:            nmRegiao.trim(),
-      ds_bioma:             dsBioma.trim(),
-      ds_estado:            dsEstado.trim(),
-      nr_criticidade_base:  Number(criticidade),
+      nm_regiao: nmRegiao.trim(),
+      ds_bioma: dsBioma.trim(),
+      nr_criticidade_base: Number(criticidade),
     };
 
     try {
-      if (modoEdicao && regiaoParaEditar) {
-        await updateRegiao(regiaoParaEditar.id_regiao, dados);
+      if (modoEdicao && regiaoId) {
+        await updateRegiao(regiaoId, dados);
         Alert.alert('Sucesso', 'Região atualizada!');
       } else {
         await createRegiao(dados);
         Alert.alert('Sucesso', 'Região criada!');
       }
       router.back();
-    } catch {
-      setErro('Erro ao salvar. Tente novamente.');
+    } catch (error) {
+      const mensagem = getErrorMessage(error, 'Erro ao salvar. Tente novamente.');
+      setErro(mensagem);
+      Alert.alert('Erro', mensagem);
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   }
 
@@ -107,21 +130,13 @@ export default function FormRegiao() {
           label="Nome da Região"
           valor={nmRegiao}
           onChange={setNmRegiao}
-          placeholder="ex: Amazônia Sul"
+          placeholder="ex: Pantanal Sul"
         />
         <Campo
           label="Bioma"
           valor={dsBioma}
           onChange={setDsBioma}
           placeholder="ex: Amazônia, Cerrado..."
-        />
-        <Campo
-          label="Estado (UF)"
-          valor={dsEstado}
-          onChange={setDsEstado}
-          placeholder="ex: PA, MT, MS..."
-          maxLength={2}
-          autoCapitalize="characters"
         />
         <Campo
           label="Criticidade Base (1–10)"
@@ -135,11 +150,11 @@ export default function FormRegiao() {
         {erro ? <Text style={styles.erro}>{erro}</Text> : null}
 
         <TouchableOpacity
-          style={[styles.botao, loading && styles.botaoDisabled]}
+          style={[styles.botao, isSaving && styles.botaoDisabled]}
           onPress={handleSalvar}
-          disabled={loading}
+          disabled={isSaving}
         >
-          {loading
+          {isSaving
             ? <ActivityIndicator color="#fff" />
             : <Text style={styles.botaoTexto}>{modoEdicao ? 'Salvar Alterações' : 'Criar Região'}</Text>
           }
@@ -153,9 +168,8 @@ export default function FormRegiao() {
   );
 }
 
-// Componente auxiliar para evitar repetição de código nos campos
 function Campo({
-  label, valor, onChange, placeholder, keyboardType = 'default', maxLength, autoCapitalize = 'sentences',
+  label, valor, onChange, placeholder, keyboardType = 'default', maxLength,
 }: {
   label: string;
   valor: string;
@@ -163,7 +177,6 @@ function Campo({
   placeholder: string;
   keyboardType?: 'default' | 'numeric' | 'email-address';
   maxLength?: number;
-  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }) {
   return (
     <View style={styles.campoWrapper}>
@@ -176,7 +189,6 @@ function Campo({
         placeholderTextColor={colors.textSecondary}
         keyboardType={keyboardType}
         maxLength={maxLength}
-        autoCapitalize={autoCapitalize}
       />
     </View>
   );

@@ -21,7 +21,7 @@ export function AlertaCard({ alerta, onPress }: Props) {
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.regiao}>{alerta.regiao}</Text>
+          <Text style={styles.regiao}>{alerta.regiao_nome}</Text>
           <View style={[styles.badge, { backgroundColor: corRisco + '22', borderColor: corRisco }]}>
             <Text style={[styles.badgeText, { color: corRisco }]}>{alerta.risco}</Text>
           </View>
@@ -46,7 +46,7 @@ export function AlertaCard({ alerta, onPress }: Props) {
         <View style={styles.coordsRow}>
           <Icon name="map-marker" size={11} color={colors.textSecondary} />
           <Text style={styles.coords}>
-            {alerta.coordenadas.lat.toFixed(2)}, {alerta.coordenadas.lng.toFixed(2)}
+            {alerta.coordenadas.latitude.toFixed(2)}, {alerta.coordenadas.longitude.toFixed(2)}
           </Text>
         </View>
       </View>

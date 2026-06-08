@@ -11,14 +11,8 @@ import {
   getToken,
   getUsuarioSalvo,
   LoginPayload,
+  Usuario,
 } from '../services/auth';
-
-type Usuario = {
-  id: number;
-  nome: string;
-  email: string;
-  perfil: 'ADMIN' | 'VISITANTE';
-};
 
 type AuthContextData = {
   usuario: Usuario | null;
@@ -42,13 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (token && usuarioSalvo) {
         setUsuario(usuarioSalvo);
       } else if (token) {
-        try {
-          const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-          setUsuario({ id: 1, nome: 'Administrador', email: payload.email, perfil: 'ADMIN' });
-        } catch {
-          await removerToken();
-          await removerUsuario();
-        }
+        await removerToken();
+        await removerUsuario();
       }
 
       setIsCarregando(false);

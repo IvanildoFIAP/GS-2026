@@ -1,25 +1,23 @@
 // services/api.ts
 // Instância central do Axios com interceptor de autenticação JWT
-// Para trocar mocks por API real: basta atualizar BASE_URL
 
-import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// ⚙️ Troque pela URL real da sua API quando o backend estiver pronto
-const BASE_URL = 'https://sua-api.com'; // ex: 'https://ignis-api.azurewebsites.net'
+const BASE_URL = 'https://ignis-global-production.up.railway.app';
+const TOKEN_KEY = '@ignis:token';
 
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor: injeta o token JWT em toda requisição automaticamente
 api.interceptors.request.use(
-  async (config) => {
-    const token = await AsyncStorage.getItem('@ignis:token');
+  async (config: InternalAxiosRequestConfig) => {
+    const token = await AsyncStorage.getItem(TOKEN_KEY);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -28,11 +26,26 @@ api.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-// Interceptor de resposta: trata erros globais (ex: 401 = token expirado)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Aqui você pode adicionar lógica de refresh token futuramente
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
+
+export function getErrorMessage(error: unknown, fallback = 'Ocorreu um erro inesperado.'): string {
+  if (axios.isAxiosError(error)) {
+    const axiosError = error as AxiosError<{ message?: string; error?: string } | string>;
+    const data = axiosError.response?.data;
+
+    if (typeof data === 'string' && data.trim()) return data;
+    if (data && typeof data === 'object' && data.message) return data.message;
+    if (data && typeof data === 'object' && data.error) return data.error;
+
+    const status = axiosError.response?.status;
+    if (status === 401) return 'Credenciais inválidas. Verifique e-mail e senha.';
+    if (status === 403) return 'Acesso negado. Você não tem permissão para esta ação.';
+    if (status === 404) return 'Recurso não encontrado.';
+  }
+
+  if (error instanceof Error && error.message) return error.message;
+  return fallback;
+}

@@ -50,11 +50,16 @@ export const fonts = {
 };
 
 export const getRiskColor = (risco: string): string => {
+  const normalizado = risco
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase();
+
   const map: Record<string, string> = {
-    CRÍTICO: colors.riskCritical,
-    ALTO:    colors.riskAlto,
-    MÉDIO:   colors.riskMedio,
-    BAIXO:   colors.riskBaixo,
+    CRITICO: colors.riskCritical,
+    ALTO: colors.riskAlto,
+    MEDIO: colors.riskMedio,
+    BAIXO: colors.riskBaixo,
   };
-  return map[risco] ?? colors.textSecondary;
+  return map[normalizado] ?? colors.textSecondary;
 };
