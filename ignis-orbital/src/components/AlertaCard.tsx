@@ -3,7 +3,8 @@
 
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { colors, getRiskColor, radius, spacing } from '../constants/theme';
+import Icon from '@expo/vector-icons/FontAwesome';
+import { colors, fonts, getRiskColor, radius, spacing } from '../constants/theme';
 import { Alerta } from '../services/alertas';
 
 type Props = {
@@ -16,7 +17,6 @@ export function AlertaCard({ alerta, onPress }: Props) {
 
   return (
     <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.8}>
-      {/* Barra lateral colorida por nível de risco */}
       <View style={[styles.riscoBar, { backgroundColor: corRisco }]} />
 
       <View style={styles.content}>
@@ -28,18 +28,27 @@ export function AlertaCard({ alerta, onPress }: Props) {
         </View>
 
         <View style={styles.info}>
-          <Text style={styles.label}>🌡 Temperatura</Text>
+          <View style={styles.labelRow}>
+            <Icon name="thermometer-half" size={12} color={colors.textSecondary} />
+            <Text style={styles.label}>Temperatura</Text>
+          </View>
           <Text style={styles.valor}>{alerta.temperatura.toFixed(1)}°C</Text>
         </View>
 
         <View style={styles.info}>
-          <Text style={styles.label}>📡 Status</Text>
+          <View style={styles.labelRow}>
+            <Icon name="paper-plane" size={12} color={colors.textSecondary} />
+            <Text style={styles.label}>Status</Text>
+          </View>
           <Text style={styles.valor}>{alerta.status}</Text>
         </View>
 
-        <Text style={styles.coords}>
-          {alerta.coordenadas.lat.toFixed(2)}, {alerta.coordenadas.lng.toFixed(2)}
-        </Text>
+        <View style={styles.coordsRow}>
+          <Icon name="map-marker" size={11} color={colors.textSecondary} />
+          <Text style={styles.coords}>
+            {alerta.coordenadas.lat.toFixed(2)}, {alerta.coordenadas.lng.toFixed(2)}
+          </Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -72,7 +81,7 @@ const styles = StyleSheet.create({
   regiao: {
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   badge: {
     borderWidth: 1,
@@ -82,24 +91,37 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   info: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   label: {
     color: colors.textSecondary,
     fontSize: 13,
+    fontFamily: fonts.regular,
   },
   valor: {
     color: colors.textPrimary,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
+  },
+  coordsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: spacing.xs,
   },
   coords: {
     color: colors.textSecondary,
     fontSize: 11,
-    marginTop: spacing.xs,
+    fontFamily: fonts.regular,
   },
 });

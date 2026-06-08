@@ -4,8 +4,9 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import Icon from '@expo/vector-icons/FontAwesome';
 import { LoadingIndicator } from '../../../components/LoadingIndicator';
-import { colors, getRiskColor, radius, spacing } from '../../../constants/theme';
+import { colors, fonts, getRiskColor, radius, spacing } from '../../../constants/theme';
 import { Alerta, getAlertaById } from '../../../services/alertas';
 
 export default function AlertaDetalheScreen() {
@@ -45,7 +46,8 @@ export default function AlertaDetalheScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {/* Badge de risco */}
       <View style={[styles.riscoBadge, { backgroundColor: corRisco + '22', borderColor: corRisco }]}>
-        <Text style={[styles.riscoTexto, { color: corRisco }]}>⚠ {alerta.risco}</Text>
+        <Icon name="exclamation-triangle" size={14} color={corRisco} />
+        <Text style={[styles.riscoTexto, { color: corRisco }]}>{alerta.risco}</Text>
       </View>
 
       <Text style={styles.regiao}>{alerta.regiao}</Text>
@@ -53,7 +55,7 @@ export default function AlertaDetalheScreen() {
 
       {/* Dados Técnicos do Satélite */}
       <View style={styles.card}>
-        <Text style={styles.cardTitulo}>📡 Dados do Satélite</Text>
+        <Text style={styles.cardTitulo}>Dados do Satélite</Text>
         <Row label="Satélite ID"    valor={alerta.satelite_id ?? '—'} />
         <Row label="Sensor"         valor={alerta.sensor ?? '—'} />
         <Row label="Temperatura"    valor={`${alerta.temperatura.toFixed(1)}°C`} />
@@ -63,7 +65,7 @@ export default function AlertaDetalheScreen() {
 
       {/* Análise de Risco (IA simulada) */}
       <View style={styles.card}>
-        <Text style={styles.cardTitulo}>🤖 Análise de Risco</Text>
+        <Text style={styles.cardTitulo}>Análise de Risco</Text>
         <Text style={styles.analise}>{alerta.descricao_risco}</Text>
       </View>
     </ScrollView>
@@ -90,13 +92,16 @@ const styles = StyleSheet.create({
   },
   riscoBadge: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     borderWidth: 1,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
   },
   riscoTexto: {
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -104,11 +109,12 @@ const styles = StyleSheet.create({
   regiao: {
     color: colors.textPrimary,
     fontSize: 26,
-    fontWeight: '800',
+    fontFamily: fonts.bold,
   },
   status: {
     color: colors.textSecondary,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
   card: {
     backgroundColor: colors.bgCard,
@@ -120,7 +126,7 @@ const styles = StyleSheet.create({
   },
   cardTitulo: {
     color: colors.primary,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
@@ -136,16 +142,18 @@ const styles = StyleSheet.create({
   rowLabel: {
     color: colors.textSecondary,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
   rowValor: {
     color: colors.textPrimary,
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   analise: {
     color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 22,
+    fontFamily: fonts.regular,
   },
   erroContainer: {
     flex: 1,

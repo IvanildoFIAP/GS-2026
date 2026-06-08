@@ -62,14 +62,35 @@ export async function login(payload: LoginPayload): Promise<AuthResponse> {
   );
 }
 
+const TOKEN_KEY = '@ignis:token';
+const USUARIO_KEY = '@ignis:usuario';
+
 export async function salvarToken(token: string): Promise<void> {
-  await AsyncStorage.setItem('@ignis:token', token);
+  await AsyncStorage.setItem(TOKEN_KEY, token);
+}
+
+export async function salvarUsuario(usuario: AuthResponse['usuario']): Promise<void> {
+  await AsyncStorage.setItem(USUARIO_KEY, JSON.stringify(usuario));
 }
 
 export async function removerToken(): Promise<void> {
-  await AsyncStorage.removeItem('@ignis:token');
+  await AsyncStorage.removeItem(TOKEN_KEY);
+}
+
+export async function removerUsuario(): Promise<void> {
+  await AsyncStorage.removeItem(USUARIO_KEY);
 }
 
 export async function getToken(): Promise<string | null> {
-  return AsyncStorage.getItem('@ignis:token');
+  return AsyncStorage.getItem(TOKEN_KEY);
+}
+
+export async function getUsuarioSalvo(): Promise<AuthResponse['usuario'] | null> {
+  const dados = await AsyncStorage.getItem(USUARIO_KEY);
+  if (!dados) return null;
+  try {
+    return JSON.parse(dados);
+  } catch {
+    return null;
+  }
 }

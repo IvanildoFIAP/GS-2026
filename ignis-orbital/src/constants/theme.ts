@@ -8,8 +8,8 @@ export const colors = {
   bgInput:    '#21262D', // inputs
 
   // Primária / Acento
-  primary:    '#F77F00', // laranja — fogo / alerta
-  primaryDim: '#7A3F00', // laranja escuro (disabled/borda)
+  primary:    '#FF5E00', // laranja — fogo / alerta
+  primaryDim: '#7E2F00', // laranja escuro (disabled/borda)
 
   // Secundária
   accent:     '#1D4ED8', // azul marinho
@@ -21,7 +21,7 @@ export const colors = {
 
   // Status
   riskCritical: '#F85149', // vermelho
-  riskAlto:     '#F77F00', // laranja
+  riskAlto:     '#FF5E00', // laranja
   riskMedio:    '#E3B341', // amarelo
   riskBaixo:    '#3FB950', // verde
 
@@ -41,6 +41,12 @@ export const radius = {
   sm: 6,
   md: 10,
   lg: 16,
+};
+
+export const fonts = {
+  regular: 'Poppins',
+  semiBold: 'Poppins-600',
+  bold: 'Poppins-700',
 };
 
 export const getRiskColor = (risco: string): string => {

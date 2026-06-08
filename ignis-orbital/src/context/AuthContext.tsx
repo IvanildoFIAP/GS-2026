@@ -2,7 +2,16 @@
 // Contexto global de autenticação — compartilha o estado de login pelo app inteiro
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { login as loginService, salvarToken, removerToken, getToken, LoginPayload } from '../services/auth';
+import {
+  login as loginService,
+  salvarToken,
+  salvarUsuario,
+  removerToken,
+  removerUsuario,
+  getToken,
+  getUsuarioSalvo,
+  LoginPayload,
+} from '../services/auth';
 
 type Usuario = {
   id: number;
@@ -22,36 +31,42 @@ type AuthContextData = {
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [usuario, setUsuario]       = useState<Usuario | null>(null);
+  const [usuario, setUsuario] = useState<Usuario | null>(null);
   const [isCarregando, setIsCarregando] = useState(true);
 
-  // Verifica se já há token salvo ao iniciar o app
   useEffect(() => {
     async function verificarSessao() {
       const token = await getToken();
-      if (token) {
-        // Em produção: valide o token com o backend aqui
-        // Por ora, decodificamos o payload do mock para recuperar o usuário
+      const usuarioSalvo = await getUsuarioSalvo();
+
+      if (token && usuarioSalvo) {
+        setUsuario(usuarioSalvo);
+      } else if (token) {
         try {
           const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
           setUsuario({ id: 1, nome: 'Administrador', email: payload.email, perfil: 'ADMIN' });
         } catch {
           await removerToken();
+          await removerUsuario();
         }
       }
+
       setIsCarregando(false);
     }
+
     verificarSessao();
   }, []);
 
   async function login(payload: LoginPayload) {
     const resposta = await loginService(payload);
     await salvarToken(resposta.token);
+    await salvarUsuario(resposta.usuario);
     setUsuario(resposta.usuario);
   }
 
   async function logout() {
     await removerToken();
+    await removerUsuario();
     setUsuario(null);
   }
 
@@ -62,7 +77,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Hook customizado para usar o contexto facilmente
 export function useAuth() {
   return useContext(AuthContext);
 }

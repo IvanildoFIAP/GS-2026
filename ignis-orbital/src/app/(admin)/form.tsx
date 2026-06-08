@@ -16,10 +16,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { colors, radius, spacing } from '../../constants/theme';
+import { LoadingIndicator } from '../../components/LoadingIndicator';
+import { useAuth } from '../../context/AuthContext';
+import { colors, fonts, radius, spacing } from '../../constants/theme';
 import { Regiao, createRegiao, updateRegiao } from '../../services/regioes';
 
 export default function FormRegiao() {
+  const { usuario, isCarregando } = useAuth();
   const params = useLocalSearchParams<{ regiaoJson?: string }>();
 
   // Se veio um objeto, estamos editando; senão, criando
@@ -38,6 +41,16 @@ export default function FormRegiao() {
   );
   const [loading, setLoading]             = useState(false);
   const [erro, setErro]                   = useState('');
+
+  useEffect(() => {
+    if (!isCarregando && !usuario) {
+      router.replace('/(public)/login');
+    }
+  }, [usuario, isCarregando]);
+
+  if (isCarregando || !usuario) {
+    return <LoadingIndicator mensagem="Verificando sessão..." />;
+  }
 
   function validar(): boolean {
     if (!nmRegiao.trim() || !dsBioma.trim() || !dsEstado.trim() || !criticidade.trim()) {
@@ -87,7 +100,7 @@ export default function FormRegiao() {
     >
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <Text style={styles.titulo}>
-          {modoEdicao ? '✏ Editar Região' : '+ Nova Região'}
+          {modoEdicao ? 'Editar Região' : 'Nova Região'}
         </Text>
 
         <Campo
@@ -182,6 +195,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 22,
     fontWeight: '800',
+    fontFamily: fonts.bold,
     marginBottom: spacing.sm,
   },
   campoWrapper: {
@@ -190,7 +204,7 @@ const styles = StyleSheet.create({
   label: {
     color: colors.textSecondary,
     fontSize: 12,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -202,11 +216,13 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     color: colors.textPrimary,
     fontSize: 15,
+    fontFamily: fonts.regular,
   },
   erro: {
     color: colors.riskCritical,
     fontSize: 13,
     textAlign: 'center',
+    fontFamily: fonts.regular,
   },
   botao: {
     backgroundColor: colors.primary,
@@ -221,7 +237,7 @@ const styles = StyleSheet.create({
   botaoTexto: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   botaoCancelar: {
     padding: spacing.md,
@@ -230,5 +246,6 @@ const styles = StyleSheet.create({
   botaoCancelarTexto: {
     color: colors.textSecondary,
     fontSize: 15,
+    fontFamily: fonts.regular,
   },
 });

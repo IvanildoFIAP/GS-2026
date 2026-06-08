@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { colors } from '../constants/theme';
+import { colors, fonts } from '../constants/theme';
 
 type Props = {
   mensagem?: string;
@@ -29,5 +29,6 @@ const styles = StyleSheet.create({
   texto: {
     color: colors.textSecondary,
     fontSize: 14,
+    fontFamily: fonts.regular,
   },
 });

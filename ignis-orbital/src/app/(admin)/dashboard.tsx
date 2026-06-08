@@ -1,30 +1,33 @@
 // app/(admin)/dashboard.tsx
 // Painel Admin — lista de regiões monitoradas com opções de editar e excluir
-// Rota protegida: só acessível após login
 
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Icon from '@expo/vector-icons/FontAwesome';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
 import { useAuth } from '../../context/AuthContext';
-import { colors, radius, spacing } from '../../constants/theme';
+import { colors, fonts, radius, spacing } from '../../constants/theme';
 import { Regiao, deleteRegiao, getRegioes } from '../../services/regioes';
 
 export default function DashboardScreen() {
-  const { usuario, logout } = useAuth();
+  const { usuario, isCarregando, logout } = useAuth();
 
-  const [regioes, setRegioes]   = useState<Regiao[]>([]);
-  const [loading, setLoading]   = useState(true);
-  const [erro, setErro]         = useState('');
+  const [regioes, setRegioes] = useState<Regiao[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState('');
 
-  // Proteção de rota: redireciona se não estiver logado
   useEffect(() => {
-    if (!usuario) router.replace('/(public)/login');
+    if (!isCarregando && !usuario) {
+      router.replace('/(public)/login');
+    }
+  }, [usuario, isCarregando]);
+
+  useEffect(() => {
+    if (usuario) {
+      carregarRegioes();
+    }
   }, [usuario]);
-
-  useEffect(() => {
-    carregarRegioes();
-  }, []);
 
   async function carregarRegioes() {
     setLoading(true);
@@ -65,29 +68,31 @@ export default function DashboardScreen() {
 
   async function handleLogout() {
     await logout();
-    router.replace('/(public)/index');
+    router.replace('/');
+  }
+
+  if (isCarregando || !usuario) {
+    return <LoadingIndicator mensagem="Verificando sessão..." />;
   }
 
   if (loading) return <LoadingIndicator mensagem="Carregando regiões..." />;
 
   return (
     <View style={styles.container}>
-      {/* Barra do usuário logado */}
       <View style={styles.userBar}>
-        <Text style={styles.userTexto}>👤 {usuario?.nome}</Text>
-        <TouchableOpacity onPress={handleLogout}>
+        <Text style={styles.userTexto}>{usuario.nome}</Text>
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>
+          <Icon name="sign-out" size={14} color={colors.riskCritical} />
           <Text style={styles.logoutTexto}>Sair</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Erro */}
       {erro ? (
         <View style={styles.erroContainer}>
           <Text style={styles.erroTexto}>{erro}</Text>
         </View>
       ) : null}
 
-      {/* Lista de Regiões */}
       <FlatList
         data={regioes}
         keyExtractor={(item) => String(item.id_regiao)}
@@ -105,19 +110,20 @@ export default function DashboardScreen() {
             </View>
             <Text style={styles.cardBioma}>{item.ds_bioma} · {item.ds_estado}</Text>
 
-            {/* Ações CRUD */}
             <View style={styles.acoes}>
               <TouchableOpacity
                 style={styles.botaoEditar}
                 onPress={() => router.push({ pathname: '/(admin)/form', params: { regiaoJson: JSON.stringify(item) } })}
               >
-                <Text style={styles.botaoEditarTexto}>✏ Editar</Text>
+                <Icon name="pencil" size={14} color={colors.accent} />
+                <Text style={styles.botaoEditarTexto}>Editar</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.botaoExcluir}
                 onPress={() => confirmarExclusao(item)}
               >
-                <Text style={styles.botaoExcluirTexto}>🗑 Excluir</Text>
+                <Icon name="trash" size={14} color={colors.riskCritical} />
+                <Text style={styles.botaoExcluirTexto}>Excluir</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -127,12 +133,12 @@ export default function DashboardScreen() {
         }
       />
 
-      {/* Botão de criar nova região */}
       <TouchableOpacity
         style={styles.botaoCriar}
         onPress={() => router.push('/(admin)/form')}
       >
-        <Text style={styles.botaoCriarTexto}>+ Nova Região</Text>
+        <Icon name="plus" size={16} color="#fff" />
+        <Text style={styles.botaoCriarTexto}>Nova Região</Text>
       </TouchableOpacity>
     </View>
   );
@@ -156,15 +162,21 @@ const styles = StyleSheet.create({
   userTexto: {
     color: colors.textSecondary,
     fontSize: 13,
+    fontFamily: fonts.regular,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   logoutTexto: {
     color: colors.riskCritical,
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   secaoTitulo: {
     color: colors.primary,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -191,7 +203,7 @@ const styles = StyleSheet.create({
   cardNome: {
     color: colors.textPrimary,
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     flex: 1,
   },
   criticidadeBadge: {
@@ -203,11 +215,12 @@ const styles = StyleSheet.create({
   criticidadeTexto: {
     color: colors.primary,
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
   },
   cardBioma: {
     color: colors.textSecondary,
     fontSize: 13,
+    fontFamily: fonts.regular,
   },
   acoes: {
     flexDirection: 'row',
@@ -216,28 +229,34 @@ const styles = StyleSheet.create({
   },
   botaoEditar: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: colors.accentDim,
     borderRadius: radius.sm,
     padding: spacing.sm,
-    alignItems: 'center',
   },
   botaoEditarTexto: {
     color: colors.accent,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     fontSize: 13,
   },
   botaoExcluir: {
     flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: colors.riskCritical + '22',
     borderRadius: radius.sm,
     padding: spacing.sm,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.riskCritical,
   },
   botaoExcluirTexto: {
     color: colors.riskCritical,
-    fontWeight: '600',
+    fontFamily: fonts.semiBold,
     fontSize: 13,
   },
   botaoCriar: {
@@ -245,10 +264,13 @@ const styles = StyleSheet.create({
     bottom: spacing.lg,
     right: spacing.lg,
     left: spacing.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
     backgroundColor: colors.primary,
     borderRadius: radius.md,
     padding: spacing.md,
-    alignItems: 'center',
     shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
@@ -257,7 +279,7 @@ const styles = StyleSheet.create({
   },
   botaoCriarTexto: {
     color: '#fff',
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     fontSize: 16,
   },
   erroContainer: {
@@ -271,10 +293,12 @@ const styles = StyleSheet.create({
   erroTexto: {
     color: colors.riskCritical,
     textAlign: 'center',
+    fontFamily: fonts.regular,
   },
   vazio: {
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xl,
+    fontFamily: fonts.regular,
   },
 });

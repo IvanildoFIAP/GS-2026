@@ -13,8 +13,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { AppLogo } from '../../components/AppLogo';
 import { useAuth } from '../../context/AuthContext';
-import { colors, radius, spacing } from '../../constants/theme';
+import { logoAspectRatio, logos } from '../../constants/images';
+import { colors, fonts, radius, spacing } from '../../constants/theme';
 
 export default function LoginScreen() {
   const { login } = useAuth();
@@ -54,7 +56,9 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.inner}>
-        <Text style={styles.titulo}>🔥 Ignis Orbital</Text>
+        <View style={styles.logoContainer}>
+          <AppLogo source={logos.login} width={180} aspectRatio={logoAspectRatio.login} />
+        </View>
         <Text style={styles.subtitulo}>Acesso Administrador</Text>
 
         <View style={styles.form}>
@@ -114,17 +118,16 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.md,
   },
-  titulo: {
-    color: colors.textPrimary,
-    fontSize: 28,
-    fontWeight: '800',
-    textAlign: 'center',
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: spacing.sm,
   },
   subtitulo: {
     color: colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
     marginBottom: spacing.lg,
+    fontFamily: fonts.regular,
   },
   form: {
     gap: spacing.sm,
@@ -135,6 +138,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    fontFamily: fonts.semiBold,
   },
   input: {
     backgroundColor: colors.bgInput,
@@ -145,11 +149,13 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 15,
     marginBottom: spacing.sm,
+    fontFamily: fonts.regular,
   },
   erro: {
     color: colors.riskCritical,
     fontSize: 13,
     textAlign: 'center',
+    fontFamily: fonts.semiBold,
   },
   botao: {
     backgroundColor: colors.primary,
@@ -165,6 +171,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '700',
+    fontFamily: fonts.bold,
   },
   dica: {
     color: colors.textSecondary,
@@ -173,5 +180,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     lineHeight: 18,
     opacity: 0.6,
+    fontFamily: fonts.regular,
   },
 });
