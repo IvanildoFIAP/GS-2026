@@ -1,13 +1,13 @@
 // app/(admin)/dashboard.tsx
 // Painel Admin — lista de regiões monitoradas com opções de editar e excluir
 
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { Alert, FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Icon from '@expo/vector-icons/FontAwesome';
+import { router } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Alert, FlatList, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { LoadingIndicator } from '../../components/LoadingIndicator';
-import { useAuth } from '../../context/AuthContext';
 import { colors, fonts, radius, spacing } from '../../constants/theme';
+import { useAuth } from '../../context/AuthContext';
 import { getErrorMessage } from '../../services/api';
 import { Regiao, deleteRegiao, getRegioes } from '../../services/regioes';
 
@@ -46,27 +46,38 @@ export default function DashboardScreen() {
   }
 
   function confirmarExclusao(regiao: Regiao) {
-    Alert.alert(
-      'Excluir Região',
-      `Deseja remover "${regiao.nm_regiao}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: () => excluirRegiao(regiao.id_regiao),
-        },
-      ],
-    );
+    const mensagem = `Deseja remover "${regiao.nm_regiao}"?`;
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Excluir Região\n\n${mensagem}`)) {
+        excluirRegiao(regiao.id_regiao);
+      }
+      return;
+    }
+
+    Alert.alert('Excluir Região', mensagem, [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: () => excluirRegiao(regiao.id_regiao),
+      },
+    ]);
   }
 
   async function excluirRegiao(id: number) {
+    setErro('');
     try {
       await deleteRegiao(id);
       setRegioes((prev) => prev.filter((r) => r.id_regiao !== id));
     } catch (error) {
       const mensagem = getErrorMessage(error, 'Não foi possível excluir a região.');
-      Alert.alert('Erro', mensagem);
+      setErro(mensagem);
+      if (Platform.OS === 'web') {
+        window.alert(mensagem);
+      } else {
+        Alert.alert('Erro', mensagem);
+      }
     }
   }
 
