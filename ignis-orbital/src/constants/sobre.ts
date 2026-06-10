@@ -1,7 +1,7 @@
 // constants/sobre.ts
 // Dados estáticos da tela Sobre
 
-export const COMMIT_HASH = 'a3f8d21';
+export { COMMIT_HASH } from './commit-hash';
 
 export const INTEGRANTES = ['Ivanildo','Leticia', 'Jennyfer', 'Paulo'];
 
